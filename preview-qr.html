@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扫码预定 · 中考花坊</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 50%, #e0f2f1 100%);
+      font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(48px) saturate(160%);
+      -webkit-backdrop-filter: blur(48px) saturate(160%);
+      border-radius: 24px;
+      padding: 36px 32px 30px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+      border: 0.5px solid rgba(255,255,255,0.70);
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .emoji-big { font-size: 48px; display: block; margin-bottom: 6px; }
+    h1 { font-size: 22px; font-weight: 700; color: #1d1d1f; margin-bottom: 4px; letter-spacing: -0.3px; }
+    h1 span { background: linear-gradient(135deg, #0071e3, #af52de); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .sub { font-size: 14px; color: #86868b; margin-bottom: 20px; font-weight: 500; }
+
+    .qr-wrap {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      display: inline-block;
+      box-shadow: 0 2px 20px rgba(0,113,227,0.10);
+      margin-bottom: 16px;
+    }
+    #qrcode canvas { display: block; margin: 0 auto; border-radius: 8px; }
+
+    .info-box {
+      background: rgba(0,113,227,0.06);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #86868b;
+      word-break: break-all;
+    }
+    .info-box .label { font-weight: 600; color: #0071e3; font-size: 11px; margin-bottom: 2px; }
+
+    .tips {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .tip-chip {
+      font-size: 12px; font-weight: 500; color: #fff;
+      padding: 4px 14px; border-radius: 20px;
+      background: linear-gradient(135deg, #0071e3, #af52de);
+    }
+    .tip-chip.green { background: linear-gradient(135deg, #34c759, #0071e3); }
+    .footer { margin-top: 16px; font-size: 12px; color: #c7c7cc; }
+
+    /* 底部按钮 */
+    .btn-group { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-group a {
+      flex: 1; display: block; padding: 10px 0; border-radius: 12px;
+      font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-group a:active { transform: scale(0.97); }
+    .btn-primary {
+      background: #0071e3; color: #fff;
+    }
+    .btn-primary:hover { background: #0062c4; }
+    .btn-secondary {
+      background: rgba(0,0,0,0.04); color: #0071e3;
+    }
+    .btn-secondary:hover { background: rgba(0,113,227,0.08); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <span class="emoji-big">🌻</span>
+  <h1>为孩子<br>送一束 <span>祝福</span></h1>
+  <p class="sub">中考加油花坊 · 扫码即订</p>
+
+  <div class="qr-wrap">
+    <div id="qrcode"></div>
+  </div>
+
+  <div class="info-box">
+    <div class="label">🌐 当前链接</div>
+    <span id="urlDisplay"></span>
+  </div>
+
+  <div class="tips">
+    <span class="tip-chip">📱 微信/相机扫码</span>
+    <span class="tip-chip green">💐 考场门口取花</span>
+  </div>
+
+  <div class="btn-group">
+    <a class="btn-primary" id="linkOpen" href="#" target="_blank">📲 直接打开</a>
+    <a class="btn-secondary" href="admin.html" target="_blank">📊 管理看板</a>
+  </div>
+
+  <div class="footer">Made with 🐷🫧</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+  const base = 'https://eds-therapist-emissions-all.trycloudflare.com/index.html';
+  document.getElementById('urlDisplay').textContent = base;
+  document.getElementById('linkOpen').href = base;
+
+  new QRCode(document.getElementById('qrcode'), {
+    text: base,
+    width: 220,
+    height: 220,
+    colorDark: '#1d1d1f',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+</script>
+</body>
+</html>

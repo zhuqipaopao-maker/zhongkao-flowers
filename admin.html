@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>管理看板 · 中考花坊</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f5f7;
+      --card: rgba(255,255,255,0.82);
+      --card-border: rgba(255,255,255,0.9);
+      --text: #1d1d1f;
+      --secondary: #86868b;
+      --accent: #0071e3;
+      --green: #34c759;
+      --red: #ff3b30;
+      --radius: 14px;
+    }
+    body {
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding: 0 16px 40px;
+    }
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: saturate(180%) blur(24px);
+      background: rgba(245,245,247,0.80);
+      border-bottom: 0.5px solid rgba(0,0,0,0.08);
+      margin: 0 -16px; padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .navbar h1 { font-size: 17px; font-weight: 600; }
+    .navbar h1 span { color: var(--accent); }
+    .navbar .actions { display: flex; gap: 6px; }
+    .navbar button {
+      font-size: 12px; padding: 6px 14px; border: none; border-radius: 8px;
+      cursor: pointer; font-weight: 500; font-family: inherit;
+    }
+    .btn-export { background: #e8e8ed; color: var(--text); }
+    .btn-clear { background: #fce8e6; color: var(--red); }
+
+    /* 统计 */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0 16px; }
+    .stat-card {
+      background: var(--card); border-radius: var(--radius);
+      backdrop-filter: blur(40px); border: 0.5px solid var(--card-border);
+      padding: 14px; text-align: center;
+    }
+    .stat-card .num { font-size: 26px; font-weight: 700; color: var(--accent); }
+    .stat-card .label { font-size: 11px; color: var(--secondary); margin-top: 2px; font-weight: 500; }
+
+    /* 筛选 */
+    .filters {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .filters select, .filters input {
+      padding: 8px 12px; border: 1.5px solid #d2d2d7; border-radius: 10px;
+      font-size: 13px; font-family: inherit; background: #fff; outline: none;
+    }
+    .filters select:focus, .filters input:focus { border-color: var(--accent); }
+    .filters button {
+      padding: 8px 16px; border: none; border-radius: 10px;
+      background: var(--accent); color: #fff; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: inherit;
+    }
+
+    /* 订单 */
+    .order-card {
+      background: var(--card);
+      backdrop-filter: blur(40px);
+      border: 0.5px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .order-card .info { flex: 1; }
+    .order-card .top {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+    }
+    .order-card .top .name { font-weight: 600; font-size: 15px; }
+    .order-card .top .school-tag {
+      font-size: 11px; font-weight: 600; color: #fff;
+      background: var(--accent); padding: 1px 10px; border-radius: 20px;
+    }
+    .order-card .meta { font-size: 12px; color: var(--secondary); line-height: 1.6; }
+    .order-card .msg {
+      font-size: 12px; color: #b8860b;
+      background: #fef9e7; padding: 2px 10px; border-radius: 8px;
+      display: inline-block; margin-top: 4px;
+    }
+    .order-card .actions {
+      display: flex; flex-direction: column; gap: 4px;
+      align-items: flex-end; flex-shrink: 0; margin-left: 10px;
+    }
+    .order-card .actions .tag {
+      font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 20px;
+    }
+    .tag-pending { background: #fff3cd; color: #856404; }
+    .tag-taken { background: #d4edda; color: #155724; }
+    .order-card .actions .take-btn {
+      font-size: 12px; padding: 4px 12px; border: none; border-radius: 8px;
+      background: var(--green); color: #fff; cursor: pointer; font-weight: 500;
+      width: 100%;
+    }
+    .order-card .actions .delete-btn {
+      font-size: 12px; padding: 4px 12px; border: none; border-radius: 8px;
+      background: #fce8e6; color: var(--red); cursor: pointer; font-weight: 500;
+      width: 100%;
+    }
+    .no-orders { text-align: center; color: var(--secondary); padding: 40px 0; font-size: 15px; }
+
+    @media (max-width: 400px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .order-card { flex-direction: column; }
+      .order-card .actions { flex-direction: row; margin-left: 0; margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <h1>📊 <span>花坊看板</span></h1>
+  <div class="actions">
+    <button class="btn-export" onclick="exportCSV()">📥 导出</button>
+    <button class="btn-clear" onclick="clearAll()">🗑️ 清空</button>
+  </div>
+</div>
+
+<div class="stats" id="stats">
+  <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">总订单</div></div>
+  <div class="stat-card"><div class="num" id="statPending">0</div><div class="label">待取花</div></div>
+  <div class="stat-card"><div class="num" id="statTaken">0</div><div class="label">已取花</div></div>
+  <div class="stat-card"><div class="num" id="statRevenue">¥0</div><div class="label">总金额</div></div>
+</div>
+
+<div class="filters">
+  <select id="filterSchool">
+    <option value="">全部考点</option>
+    <option value="金华市第十五中学">第十五中学</option>
+    <option value="金华市第五中学">第五中学</option>
+    <option value="金华市南苑中学">南苑中学</option>
+    <option value="义乌稠州中学">稠州中学</option>
+    <option value="绣湖中学">绣湖中学</option>
+  </select>
+  <select id="filterStatus">
+    <option value="">全部状态</option>
+    <option value="pending">待取花</option>
+    <option value="taken">已取花</option>
+  </select>
+  <input type="text" id="searchPhone" placeholder="手机号" maxlength="11">
+  <button onclick="render()">筛选</button>
+</div>
+
+<div id="orderList"></div>
+
+<script>
+const API_BASE = location.origin;
+let allOrders = [];
+
+async function load() {
+  try {
+    const r = await fetch(API_BASE + '/api/orders');
+    const data = await r.json();
+    allOrders = data.map(o => ({
+      id: o.id,
+      phone: o.phone,
+      school: o.school,
+      flowerName: o.flower_name,
+      flowerPrice: o.flower_price,
+      count: o.count,
+      total: o.total,
+      time: o.time,
+      name: o.name,
+      message: o.message,
+      createdAt: o.created_at,
+      taken: !!o.taken,
+    }));
+  } catch { allOrders = []; }
+}
+
+async function render() {
+  await load();
+  const school = document.getElementById('filterSchool').value;
+  const status = document.getElementById('filterStatus').value;
+  const phone = document.getElementById('searchPhone').value.trim();
+
+  let filtered = [...allOrders];
+  if (school) filtered = filtered.filter(o => o.school === school);
+  if (status === 'pending') filtered = filtered.filter(o => !o.taken);
+  if (status === 'taken') filtered = filtered.filter(o => o.taken);
+  if (phone) filtered = filtered.filter(o => o.phone.includes(phone));
+
+  const total = allOrders.length;
+  const pending = allOrders.filter(o => !o.taken).length;
+  const taken = allOrders.filter(o => o.taken).length;
+  const revenue = allOrders.filter(o => o.taken).reduce((s, o) => s + o.total, 0);
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statTaken').textContent = taken;
+  document.getElementById('statRevenue').textContent = '¥' + revenue;
+
+  const list = document.getElementById('orderList');
+  if (!filtered.length) { list.innerHTML = '<div class="no-orders">暂无订单</div>'; return; }
+
+  list.innerHTML = filtered.map(o => `
+    <div class="order-card">
+      <div class="info">
+        <div class="top">
+          <span class="name">${o.flowerName} × ${o.count}</span>
+          <span class="school-tag">${o.school}</span>
+        </div>
+        <div class="meta">📞 ${o.phone} ${o.name !== '未填写' ? '· ' + o.name : ''}</div>
+        <div class="meta">💰 ¥${o.total} · ⏰ ${o.time} · ${o.createdAt || ''}</div>
+        ${o.message && o.message !== '无' ? `<span class="msg">💬 ${o.message}</span>` : ''}
+      </div>
+      <div class="actions">
+        <span class="tag ${o.taken ? 'tag-taken' : 'tag-pending'}">${o.taken ? '已取花' : '待取花'}</span>
+        ${!o.taken ? `<button class="take-btn" onclick="markTaken('${o.id}')">✅ 已取</button>` : ''}
+        <button class="delete-btn" onclick="delOrder('${o.id}')">🗑️ 删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function markTaken(id) {
+  try {
+    await fetch(API_BASE + '/api/order/' + id + '/take', {method:'POST'});
+    await render();
+  } catch(e) { alert('取花失败：' + e.message); }
+}
+
+async function delOrder(id) {
+  if (!confirm('删除该订单？')) return;
+  try {
+    await fetch(API_BASE + '/api/order/' + id, {method:'DELETE'});
+    await render();
+  } catch(e) { alert('删除失败：' + e.message); }
+}
+
+async function clearAll() {
+  if (!confirm('⚠️ 确定清空全部订单？')) return;
+  if (!confirm('再次确认？此操作不可恢复。')) return;
+  // 逐个删除（简单处理）
+  await load();
+  for (const o of allOrders) {
+    try { await fetch(API_BASE + '/api/order/' + o.id, {method:'DELETE'}); } catch {}
+  }
+  await render();
+}
+
+function exportCSV() {
+  load();
+  if (!allOrders.length) { alert('暂无数据'); return; }
+  const headers = ['手机号','称呼','考点','花束','数量','单价','总价','取花时段','祝福语','状态','下单时间'];
+  const rows = allOrders.map(o => [o.phone, o.name||'', o.school, o.flowerName, o.count, o.flowerPrice, o.total, o.time, o.message||'', o.taken ? '已取花' : '待取花', o.createdAt||'']);
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(','))].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '中考花坊_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+render();
+setInterval(render, 10000);
+</script>
+</body>
+</html>
